@@ -1,0 +1,51 @@
+services:
+  # Haproxyロードバランサー
+  haproxy:
+    image: haproxy:2.8-alpine
+    container_name: haproxy
+    ports:
+      - "80:80"      # HTTPトラフィック
+      - "8404:8404"  # Haproxy統計情報画面
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - app
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo 'show info' | nc localhost 8404 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Goアプリケーション
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    environment:
+      - APP_VERSION=${APP_VERSION:-1.0.0}
+      - PORT=8080
+    expose:
+      - "8080"
+    networks:
+      - app_network
+    # ヘルスチェック設定（Dockerfileにも記載）
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # デプロイ設定（初期は1レプリカ）
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+networks:
+  app_network:
+    driver: bridge
