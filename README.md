@@ -29,7 +29,7 @@ blue-green-demo/
 
 ```bash
 # プロジェクトディレクトリに移動
-cd /Users/systemi/devs/golang/blue-green-demo
+cd blue-green-demo
 
 # コンテナを起動
 docker compose up -d --build
