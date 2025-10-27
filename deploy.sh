@@ -246,6 +246,9 @@ echo ""
 # Step 2: 新コンテナを起動（スケールアップ）
 TARGET_SCALE=$((CURRENT_COUNT + 1))
 log_info "Step 2/5: 新しいコンテナを起動中（スケール: ${CURRENT_COUNT} → ${TARGET_SCALE}）..."
+
+# --no-recreate: 既存コンテナを再作成せず、新しいコンテナのみを追加
+# このオプションにより、進行中リクエストを持つ古いコンテナが保護される
 docker compose up -d --no-deps --scale app=$TARGET_SCALE --no-recreate app 2>&1 | grep -v "^time="
 log_success "新コンテナ起動完了"
 echo ""
@@ -337,7 +340,8 @@ echo ""
 FINAL_SCALE=$CURRENT_COUNT
 if [ $FINAL_SCALE -ne $CURRENT_COUNT ]; then
     log_info "Step 5/5: スケールを${FINAL_SCALE}に調整中..."
-    docker compose up -d --no-deps --scale app=$FINAL_SCALE app 2>&1 | grep -v "^time="
+    # --no-recreate: 残存するコンテナを再作成せずにスケール調整
+    docker compose up -d --no-deps --scale app=$FINAL_SCALE --no-recreate app 2>&1 | grep -v "^time="
     log_success "スケール調整完了"
 else
     log_info "Step 5/5: スケール調整は不要です"
